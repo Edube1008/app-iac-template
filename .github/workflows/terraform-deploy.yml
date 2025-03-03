@@ -1,0 +1,44 @@
+name: "Terraform Deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment (dev, qut, prod)"
+        required: true
+        default: "dev"
+
+jobs:
+  terraform:
+    name: "Deploy Terraform"
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure AWS Credentials
+        run: |
+          echo "Setting up AWS credentials"
+          export AWS_ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}
+          if [[ "${{ github.event.inputs.environment }}" == "qut" ]]; then
+            export AWS_ROLE_ARN=${{ secrets.AWS_QUT_ROLE_ARN }}
+          elif [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
+            export AWS_ROLE_ARN=${{ secrets.AWS_PROD_ROLE_ARN }}
+          fi
+          echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
+
+      - name: Initialize Terraform
+        run: terraform init -backend-config=environments/${{ github.event.inputs.environment }}/backend.tf
+
+      - name: Plan Terraform
+        run: terraform plan -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars
+
+      - name: Apply Terraform
+        run: terraform apply -auto-approve -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars
