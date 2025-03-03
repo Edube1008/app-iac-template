@@ -1,3 +1,7 @@
+provider "aws" {
+  region  = "ca-central-1"
+}
+
 terraform {
   backend "s3" {
     bucket         = "backend-dev-git-terraform-bucket"  # S3 Bucket for state file
