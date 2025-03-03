@@ -1,3 +1,5 @@
+aws_role_arn = "arn:aws:iam::034362057200:role/prd-app-iac-template"
+
 bucket_name        = "the-good-old-days"
 lifecycle_days     = 90
 bucket_prefix      = "prod-bucket-prefix"
