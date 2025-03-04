@@ -32,27 +32,24 @@ jobs:
         run: |
           echo "Setting up AWS credentials"
           if [[ "${{ github.event.inputs.environment }}" == "dev" ]]; then
-            export AWS_ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}" >> $GITHUB_ENV
           elif [[ "${{ github.event.inputs.environment }}" == "qut" ]]; then
-            export AWS_ROLE_ARN=${{ secrets.AWS_QUT_ROLE_ARN }}
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_QUT_ROLE_ARN }}" >> $GITHUB_ENV
           elif [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
-            export AWS_ROLE_ARN=${{ secrets.AWS_PROD_ROLE_ARN }}
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_PROD_ROLE_ARN }}" >> $GITHUB_ENV
           fi
-          echo "AWS_ROLE_ARN=$AWS_ROLE_ARN" >> $GITHUB_ENV
 
-      - name: Assume AWS Role
-        run: |
-          echo "Assuming AWS Role..."
-          CREDENTIALS=$(aws sts assume-role --role-arn "$AWS_ROLE_ARN" --role-session-name GitHubActionsTerraform)
-          echo "AWS_ACCESS_KEY_ID=$(echo $CREDENTIALS | jq -r .Credentials.AccessKeyId)" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=$(echo $CREDENTIALS | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_ENV
-          echo "AWS_SESSION_TOKEN=$(echo $CREDENTIALS | jq -r .Credentials.SessionToken)" >> $GITHUB_ENV
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ca-central-1
 
       - name: Initialize Terraform
         run: terraform init -backend-config=environments/${{ github.event.inputs.environment }}/backend.tf
 
       - name: Plan Terraform
-        run: terraform plan -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars -var="aws_role_arn=$AWS_ROLE_ARN"
+        run: terraform plan -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars
 
       - name: Apply Terraform
-        run: terraform apply -auto-approve -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars -var="aws_role_arn=$AWS_ROLE_ARN"
+        run: terraform apply -auto-approve -var-file=environments/${{ github.event.inputs.environment }}/terraform.tfvars
