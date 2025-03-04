@@ -1,4 +1,4 @@
-aws_role_arn = "arn:aws:iam::954976304160:role/dev-app-iac-template"
+
 
 bucket_name        = "the-good-old-days"
 lifecycle_days     = 90
