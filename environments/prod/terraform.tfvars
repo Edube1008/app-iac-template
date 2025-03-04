@@ -1,4 +1,13 @@
+ assume_role {
+    role_arn     = arn:aws:iam::034362057200:role/prd-app-iac-template
+    session_name = "terraform-deployment"
+  }
+
+
 aws_role_arn = "arn:aws:iam::034362057200:role/prd-app-iac-template"
+
+module "s3" {
+  source = "../../modules/storage/s3"
 
 
 bucket_name        = "the-good-old-days"
@@ -17,3 +26,4 @@ tags = {
 create              = true
 Enable_eventbridge  = true
 enable_logging      = false
+}
